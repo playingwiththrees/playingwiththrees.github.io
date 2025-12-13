@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>playingwiththrees</title>
+<meta charset="utf-8">
+<style>
+body {
+    font-family: monospace;
+    margin: 20px;
+}
+#output {
+    margin-top: 10px;
+    white-space: pre-wrap;
+}
+#output img {
+    max-width: 100%;
+    height: auto;
+    margin: 10px 0;
+}
+#output iframe {
+    margin: 10px 0;
+}
+</style>
+</head>
+<body>
+<pre>
+playingwiththrees
+b. <a href="#" onclick="reveal('date1'); return false;">041297</a>, <a href="#" onclick="reveal('date2'); return false;">111700</a>
+
+<div id="output"></div>
+</pre>
+
+<script>
+// Text items (60% probability)
+const textItems = [
+    '•dry-swallowing focus',
+    '•some aimed directly at me, some just grazing',
+    '•hush held its posture too long—',
+    '•slipped',
+    '•fractured',
+    '•then the cup again',
+    '•lips cracked from the idea of salt (said nothing)',
+    '•no emblem',
+    '•there were no others',
+    '•there was no scene',
+    '•there was no one else that understood',
+    '•beneath that',
+    '•like the wrong god said try again',
+    '•i still think about that one look',
+    '•water balloon drops 96 feet in front of me nearly missing my head in downtown la  on may 21st around 11:13pm',
+    '•i\'ll do anything you ask, anything you say',
+    '•grey cross inversion besieged upon filth',
+    '•the eternally unsatisfied, in sin'
+];
+
+// Other items (40% probability)
+const otherItems = [
+    // YouTube videos
+    { type: 'youtube', value: 'Peb9yfcecQU' },
+    { type: 'youtube', value: 'OQN9Ect8zwU' },
+    { type: 'youtube', value: 'k4eggdXJKvw' },
+    { type: 'youtube', value: 'rjxr9hzcPiA' },
+    // Coordinates
+    { type: 'coords', value: '35.399805,-119.397750', url: 'https://www.google.com/maps/place/35.399805,-119.397750' },
+    // URLs
+    { type: 'url', value: 'http://myboyfriendcamebackfromth.ewar.ru/', url: 'http://myboyfriendcamebackfromth.ewar.ru/' },
+    { type: 'url', value: 'https://www.sigmaequipment.com/equipment/used/ok-international-supercloser-400-stainless-steel-polybag-in-box-decuffer-folder-closer-305886', url: 'https://www.sigmaequipment.com/equipment/used/ok-international-supercloser-400-stainless-steel-polybag-in-box-decuffer-folder-closer-305886' },
+    // Images
+    { type: 'image', value: 'https://64.media.tumblr.com/eae6044db48ec5d46f54f7dff3c45449/b5d94bbd3c0ea515-94/s2048x3072/56e4e99a2ddae6934a140d53a2278f06b7bfd2e4.jpg' },
+    { type: 'image', value: 'https://64.media.tumblr.com/629b9693361afb6a885ad86195812ec2/77713d3a0e33dc68-bc/s2048x3072/d4209b226a15e201d7f55ab62e1e9a0cf90555c9.png' },
+    { type: 'image', value: 'https://64.media.tumblr.com/64f813b1fd938621d11d10c3b09e2a46/12415dacb0fa297a-9e/s1280x1920/9b7a7271b7e8e08688365e37347f3393d016f429.webp' },
+    { type: 'image', value: 'https://64.media.tumblr.com/3e76c0038b2f2afec4816c802396b444/08d337ea92c47b75-54/s1280x1920/17d966d9f1b3f06c2a6839309b9fd6fa17a5ff0d.webp' },
+    { type: 'image', value: 'https://64.media.tumblr.com/79bd4ea3090d16117daf3b370de6e8a8/f14c2f10da98d5cd-90/s2048x3072/4aad7cf01589ac6a37ec4a360509a88e28e6cbf4.jpg' },
+    { type: 'image', value: 'https://64.media.tumblr.com/f8e385596ea711751e37322479ecf4fd/02eed04eab5a0b84-e2/s2048x3072/a96a41c983aca6c392ec7a4bf6ac5e0ddfc4ab89.jpg' }
+];
+
+// Shuffle arrays randomly on page load
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+const shuffledText = shuffleArray(textItems);
+const shuffledOther = shuffleArray(otherItems);
+
+// Track which items have been shown
+let textIndex = 0;
+let otherIndex = 0;
+
+function renderItem(item) {
+    const out = document.getElementById('output');
+    let html = '';
+    
+    if (typeof item === 'string') {
+        // Text item
+        html = item;
+    } else {
+        // Other item
+        switch (item.type) {
+            case 'youtube':
+                html = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.value}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                break;
+            case 'coords':
+                html = `<a href="${item.url}" target="_blank">(${item.value})</a>`;
+                break;
+            case 'url':
+                html = `<a href="${item.url}" target="_blank">${item.value}</a>`;
+                break;
+            case 'image':
+                html = `<img src="${item.value}" alt="">`;
+                break;
+        }
+    }
+    
+    if (out.innerHTML) {
+        out.innerHTML = html + '<br>' + out.innerHTML;
+    } else {
+        out.innerHTML = html;
+    }
+}
+
+function reveal(id) {
+    // Determine which category to use (60% text, 40% other)
+    const rand = Math.random();
+    let item;
+    
+    if (rand < 0.6) {
+        // Text category (60%)
+        if (textIndex < shuffledText.length) {
+            item = shuffledText[textIndex];
+            textIndex++;
+        } else if (otherIndex < shuffledOther.length) {
+            // Fallback to other if text is exhausted
+            item = shuffledOther[otherIndex];
+            otherIndex++;
+        } else {
+            return; // All items shown
+        }
+    } else {
+        // Other category (40%)
+        if (otherIndex < shuffledOther.length) {
+            item = shuffledOther[otherIndex];
+            otherIndex++;
+        } else if (textIndex < shuffledText.length) {
+            // Fallback to text if other is exhausted
+            item = shuffledText[textIndex];
+            textIndex++;
+        } else {
+            return; // All items shown
+        }
+    }
+    
+    renderItem(item);
+}
+</script>
+
+</body>
+</html>
+
