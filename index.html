@@ -65,11 +65,22 @@ const otherItems = [
     { type: 'youtube', value: 'OQN9Ect8zwU' },
     { type: 'youtube', value: 'k4eggdXJKvw' },
     { type: 'youtube', value: 'rjxr9hzcPiA' },
+    { type: 'youtube', value: 't-ZWrUKY0zs' },
+    { type: 'youtube', value: 'lm8W8jMtQyA' },
+    { type: 'youtube', value: 'R-GH6JJFcLA' },
+    { type: 'youtube', value: 'KN5lhQj-8Z8' },
+    { type: 'youtube', value: 'OspCW4BlC5Q' },
+    { type: 'youtube', value: 'cvrp1kjUCpM' },
+    // Vimeo videos
+    { type: 'vimeo', value: '47914218' },
     // Coordinates
     { type: 'coords', value: '35.399805,-119.397750', url: 'https://www.google.com/maps/place/35.399805,-119.397750' },
     // URLs
     { type: 'url', value: 'http://myboyfriendcamebackfromth.ewar.ru/', url: 'http://myboyfriendcamebackfromth.ewar.ru/' },
     { type: 'url', value: 'https://www.sigmaequipment.com/equipment/used/ok-international-supercloser-400-stainless-steel-polybag-in-box-decuffer-folder-closer-305886', url: 'https://www.sigmaequipment.com/equipment/used/ok-international-supercloser-400-stainless-steel-polybag-in-box-decuffer-folder-closer-305886' },
+    { type: 'url', value: 'https://portalcioranbr.wordpress.com/fortuna-critica/thinking-against-oneself-cioran/', url: 'https://portalcioranbr.wordpress.com/fortuna-critica/thinking-against-oneself-cioran/' },
+    // PDFs
+    { type: 'pdf', value: 'https://ia600400.us.archive.org/35/items/on-the-heights-of-despair/On%20the%20Heights%20of%20Despair.pdf' },
     // Images
     { type: 'image', value: 'https://64.media.tumblr.com/eae6044db48ec5d46f54f7dff3c45449/b5d94bbd3c0ea515-94/s2048x3072/56e4e99a2ddae6934a140d53a2278f06b7bfd2e4.jpg' },
     { type: 'image', value: 'https://64.media.tumblr.com/629b9693361afb6a885ad86195812ec2/77713d3a0e33dc68-bc/s2048x3072/d4209b226a15e201d7f55ab62e1e9a0cf90555c9.png' },
@@ -108,6 +119,12 @@ function renderItem(item) {
         switch (item.type) {
             case 'youtube':
                 html = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.value}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                break;
+            case 'vimeo':
+                html = `<iframe width="560" height="315" src="https://player.vimeo.com/video/${item.value}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+                break;
+            case 'pdf':
+                html = `<iframe width="100%" height="600" src="${item.value}" frameborder="0"></iframe>`;
                 break;
             case 'coords':
                 html = `<a href="${item.url}" target="_blank">(${item.value})</a>`;
