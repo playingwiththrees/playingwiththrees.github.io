@@ -4,6 +4,7 @@
 <title>playingwiththrees</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Permissions-Policy" content="encrypted-media=*">
 <style>
 @font-face {
     font-family: 'Pantasia';
@@ -35,6 +36,44 @@ a {
     max-width: 100%;
     margin: 10px 0;
 }
+#twitch-embed-container {
+    position: fixed;
+    z-index: 1000;
+    display: none;
+}
+#twitch-embed-container.show {
+    display: block;
+}
+/* Desktop: top right, 40vw, no margins */
+@media (min-width: 768px) {
+    #twitch-embed-container {
+        top: 0;
+        right: 0;
+        width: 40vw;
+        max-width: 600px;
+    }
+    #twitch-embed-container > div,
+    #twitch-embed-container iframe {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border: none;
+    }
+}
+/* Mobile: bottom right, larger size, no margins */
+@media (max-width: 767px) {
+    #twitch-embed-container {
+        bottom: 0;
+        right: 0;
+        width: 85vw;
+        max-width: 100%;
+    }
+    #twitch-embed-container > div,
+    #twitch-embed-container iframe {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border: none;
+    }
+}
 </style>
 <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init zr Wr fi Br Gr ci Nr Hr capture Ui calculateEventProperties Kr register register_once register_for_session unregister unregister_for_session Zr getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Xr Jr createPersonProfile Qr jr ts opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Vr debug O Yr getPageViewId captureTraceFeedback captureTraceMetric Or".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -52,6 +91,8 @@ b. <a href="#" onclick="reveal('date1'); return false;">041297</a>, <a href="#" 
 
 <div id="output"></div>
 </pre>
+
+<div id="twitch-embed-container"></div>
 
 <script>
 // Text items (60% probability)
@@ -205,6 +246,131 @@ function reveal(id) {
         }, 500);
     }
 }
+
+// Track if player has detected stream as offline (more reliable than API)
+let playerDetectedOffline = false;
+let twitchPlayer = null;
+
+// Initialize Twitch embed - it will use ONLINE/OFFLINE events to show/hide
+function initializeTwitchEmbed() {
+    const username = 'cousinmosquito';
+    const container = document.getElementById('twitch-embed-container');
+    
+    // Only create embed if it doesn't exist yet
+    if (!twitchPlayer && container.querySelector('div[id^="twitch-player-"]') === null) {
+        showTwitchEmbed(username, container);
+    }
+}
+
+function showTwitchEmbed(username, container) {
+    // Twitch's CSP requires the parent to match the actual origin
+    // If accessing via 127.0.0.1, we need to use that, but Twitch might not allow it
+    // Best solution: access via localhost:8080 instead of 127.0.0.1:8080
+    // For now, try using the actual hostname
+    let parent = window.location.hostname;
+    
+    // If it's 127.0.0.1, try using localhost (but this might not work due to CSP)
+    // The user should access via localhost:8080 for it to work properly
+    if (window.location.hostname === '127.0.0.1') {
+        parent = 'localhost'; // Try localhost, but CSP might still block it
+    }
+    
+    // Clear any existing content
+    container.innerHTML = '';
+    // Don't show yet - wait for ONLINE event
+    
+    // Use Twitch Player API (correct API per documentation)
+    if (window.Twitch && window.Twitch.Player) {
+        createTwitchPlayer(username, parent, container);
+    } else {
+        // Load Twitch player script first (correct URL per documentation)
+        const script = document.createElement('script');
+        script.src = 'https://player.twitch.tv/js/embed/v1.js';
+        script.onload = () => {
+            createTwitchPlayer(username, parent, container);
+        };
+        document.head.appendChild(script);
+    }
+}
+
+function createTwitchPlayer(username, parent, container) {
+    // Create a unique ID for this player
+    const playerId = 'twitch-player-' + Date.now();
+    container.innerHTML = `<div id="${playerId}"></div>`;
+    
+    // Use Twitch.Player API as per documentation
+    const options = {
+        width: '100%',
+        height: '100%',
+        channel: username,
+        parent: [parent], // Array format as per documentation
+        autoplay: true, // Defaults to true per docs, but explicit is better
+        muted: true // Muted for better autoplay compatibility
+    };
+    
+    const player = new Twitch.Player(playerId, options);
+    twitchPlayer = player; // Store player reference
+    
+    // Start hidden - will show when stream goes online
+    container.classList.remove('show');
+    playerDetectedOffline = true; // Assume offline until we hear otherwise
+    
+    // Set muted and try to play when ready
+    player.addEventListener(Twitch.Player.READY, () => {
+        player.setMuted(true);
+    });
+    
+    // Listen for OFFLINE event - stream went offline
+    player.addEventListener(Twitch.Player.OFFLINE, () => {
+        playerDetectedOffline = true;
+        container.classList.remove('show');
+    });
+    
+    // Listen for ONLINE event - stream came online
+    player.addEventListener(Twitch.Player.ONLINE, () => {
+        playerDetectedOffline = false; // Clear offline flag
+        container.classList.add('show');
+        
+        // Try to play when stream comes online
+        player.setMuted(true);
+        const tryPlay = (attempt = 0) => {
+            if (attempt < 5) {
+                try {
+                    const playResult = player.play();
+                    if (playResult && typeof playResult.then === 'function') {
+                        playResult.then(() => {
+                            // Video started playing
+                        }).catch(err => {
+                            setTimeout(() => tryPlay(attempt + 1), 300);
+                        });
+                    }
+                } catch (err) {
+                    // Error calling play()
+                }
+            }
+        };
+        setTimeout(() => tryPlay(), 100);
+    });
+    
+    // Also listen for PLAYING event to confirm it started
+    player.addEventListener(Twitch.Player.PLAYING, () => {
+        // Video is playing
+    });
+    
+    // Listen for PLAYBACK_BLOCKED event
+    player.addEventListener(Twitch.Player.PLAYBACK_BLOCKED, () => {
+        // Playback was blocked
+    });
+}
+
+
+// Initialize Twitch embed on page load - it will automatically show/hide based on ONLINE/OFFLINE events
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTwitchEmbed);
+} else {
+    initializeTwitchEmbed();
+}
+// No need for interval - Twitch player events handle stream status changes automatically
 </script>
 
 </body>
